@@ -1,0 +1,262 @@
+import java.io.File; 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
+import twitter4j.FilterQuery;
+import twitter4j.StallWarning; 
+import twitter4j.Status;
+import twitter4j.StatusDeletionNotice;
+import twitter4j.StatusListener;
+import twitter4j.TwitterObjectFactory; 
+import twitter4j.TwitterStream; 
+import twitter4j.TwitterStreamFactory;
+import twitter4j.conf.ConfigurationBuilder;
+
+public class Twitter{
+
+private Twitter Stream twitterStream;
+private String[] keywords;
+private String destinationFileLocation;
+private String propertiesFilelocation,
+Properties prop = new Properties(); 
+FileOutputStream fos;
+public Twitter(String ploc, String dloc){ 
+propertiesFilelocation = ploc;
+destinationFileLocation = dloc;
+//load a properties file
+try
+{
+prop.load(new FileInputStream(propertiesFilelocation));
+ConfigurationBuilder config = new ConfigurationBuilder(); 
+config.setOAuthConsumerKey(prop.getProperty("CONSUMER_KEY")); 
+config.setOAuthConsumerSecret(prop.getProperty("CONSUMER_SECRET"));
+config.setOAuthAccessToken(prop.getProperty("ACCESS_TOKEN")); 
+config.setOAuthAccessTokenSecret(prop.getProperty("ACCESS TOKEN SECRET")); 
+config.setJSONStoreEnabled(true); 
+config.setIncludeEntitiesEnabled(true);
+twitterStream = new TwitterStreamFactory(config.build()).getInstance(); 
+//TwitterStream twitter4j.TwitterStreamFactor}
+catch (FileNotFoundException e) 
+{ e.printStackTrace();
+//block Note: This element neither has attached source nora }
+catch (IOException e){ e.printStackTrace();
+}
+}
+public void startTwitter{
+try{ fos = new FileOutputStream(new File(destinationFileLocation)); 
+}catch (IOException e){ e.printStackTrace();}
+//Add listener to the stream 
+twitterStream. addListener(listener);
+
+String keywordsString = prop.getProperty("TWITTER_KEYWORDS"); 
+keywords = keywordsString.split(""); 
+for (int i=0; i < keywords.length; i++) {
+keywords[i] = keywords[i].trim();
+}
+System.out.println("Starting Twitter stream...");
+//Filter only relevant tweets based on the keywords 
+FilterQuery query = new FilterQuery(); 
+double[] loc={{-122.75,36.8},{-121.75,37.8}}; 
+query track(keywords); 
+query.locations(loc);
+
+twitterStream.filter(query);
+}
+public void stopTwitter(){
+System.out.println("Shut down Twitter stream..."); 
+try{ fos.close(); }
+catch (IOException e){ e.printStackTrace();
+}
+}
+StatusListener listener = new StatusListener(){
+//The onStatus method is executed every time a new tweets comes in.
+// When we get a tweets, write it to a file
+
+public void onStatus(Status status){
+String newline = "r\n"; 
+System.out.println(status.getUser().getScreenName() +"" + status.getText()); 
+System.out.println("timestamp"+ String.value Of(status.getCreatedAt().getTime()); 
+try {
+fos.write(TwitterObjectFactory.getRaWJSON(status).getBytes()); 
+fos.write(newline.getBytes(); }
+catch (IOException e){ e.printStackTrace();
+}
+}
+//This listener will ignore everything except for new tweets
+public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) 
+public void onTrackLimitationNotice(int numberoflimitedStatuses) 
+public void onScrubGeo(long userld, long upToStatusld) 
+public void onException(Exception ex){}
+public void onStallWarning(StallWarning stallWarning){}
+};
+public static void main(String[] args) throws InterruptedException{
+if(args.length != 2) {
+System.err.println("Usage 2 parameters 1.properties files with tokes keywords 2.destination file location"); 
+System.exit(-1);
+}
+Twitter twitter = new Twitter(args[0],args[1]); 
+twitter.startTwitter(); 
+Thread.sleep(300000); 
+twitter.stop Twitter();
+}
+}
+
+package Package Demo,
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration; 
+import org.apache hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable; 
+import org.apache.hadoop.io.Long Writable; 
+import org.apache.hadoop.io.Text; 
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper; 
+import org.apache.hadoop.mapreduce.Reducer; 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; 
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat; 
+import org.apache.hadoop.util.GenericOptionsParser; 
+public class WordCount {
+ public static void main(String l args) throws Exception
+Configuration c=new Configuration(); 
+String[] files=new Generic OptionsParser(c,args).getRemainingArgs(); 
+Path input=new Path(files[0]); 
+Path output=new Path(files[1]); 
+Job j=new Job(c,"wordcount"); 
+j.setJarByClass(WordCount.class); 
+j.setMapperClass(MapFor WordCount.class); 
+j.setReducerClass(ReduceForWordCount.class); 
+j.setOutputKeyClass(Text.class); 
+j.setOutput ValueClass(IntWritable.class); 
+FileInputFormat.addinputPath(j,input); 
+FileOutputFormat setOutputPath(j,output); 
+System.exit(j.waitForCompletion(true)?0:1);
+}
+public static class MapForWordCount extends Mapper<LongWritable, Text, Text, IntWritable> {
+public void map(LongWritable key, Text value, Context con) throws IOException, InterruptedException
+{
+String line = value.toString(); 
+String[] words=line.split(","); 
+for(String word: words )
+{
+Text outputKey = new Text(word.toUpperCase().trim()); 
+IntWritable outputValue = new IntWritable(1); 
+con.write(outputkey, outputValue);
+}
+}
+}
+public static class ReduceForWordCount extends Reducer<Text, IntWritable, Text, IntWritable>
+{
+public void reduce(Text word, Iterable<IntWritable> values, Context con) throws IOException, InterruptedException
+{
+int sum = 0;
+for(IntWritable value : values)
+{
+sum += value.get();
+}
+con.write(word, new IntWritable(sum));
+}
+}
+}
+
+import java.io.IOException; 
+import java.util.*;
+import org.apache.hadoop.fs.Path; 
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapred.*;
+public class Twitter FollowerCounter {
+public static class Map extends MapReduceBase implements Mapper<Long Writable, Text, Text, IntWritable> {
+private final static IntWritable one = new IntWritable(1); 
+private Text word = new Text();
+public void map(Longwritable key, Text value, Output Collector Text, IntWritable> output, Reporter reporter) throws IOException {
+String line = value.toString(); 
+StringTokenizer tokenizer = new StringTokenizer(line);
+if (tokenizer hasMore Tokens()) { 
+word.set(tokenizer.nextToken());
+output.collect(word, one);
+}
+}
+}
+public static class Reduce extends MapReduceBase implements Reducer<Text, IntWritable, Text, IntWritable> {
+public void reduce(Text key, Iterator IntWritable> values, Output Collector<Text, IntWritable> output, Reporter reporter) throws IOException {
+int sum = 0; 
+while (values.hasNext()) { 
+sum += values.next().get();
+}
+Output.collect(key, new IntWritable(sum));
+}
+}
+public static void main(Stringi args) throws Exception {
+JobConf conf = new JobConf(Twitter FollowerCounter.class); 
+conf.setJobName("Twitter FollowerCounter");
+conf.setOutputkeyClass(Text.class); 
+conf.setOutputValueClass(IntWritable class);
+conf.setMapperClass(Map.class); 
+//conf.setCombinerClass(Reduce.class); 
+conf.setReducerClass(Reduce.class);
+conf.setinputFormat(TextinputFormat class); 
+conf.setOutputFormat(TextOutputFormat.class);
+FileInputFormat setinputPaths(conf, new Path(args[0])); 
+FileOutputFormat setOutputPath(conf, new Path(args[1]);
+JobClient.runJob(conf);
+}
+}
+package TwitterAvgFollower; 
+import java.io.IOException; 
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*; 
+import org.apache.hadoop.mapred.*;
+public class TwitterAvgFollowers{
+
+public static class Map extends MapReduceBase implements Mapper<Longwritable, Text, IntWritable, Floatwritable> {
+private final static Intwritable static_key = new IntWritable(0); 
+private Floatwritable val= new Floatwritable();
+
+public void map(Long Writable key, Text value, OutputCollector<IntWritable, FloatWritable> output, Reporter reporter) throws IOException{
+String line = value.toString().; 
+String[] twitter_id_and_count_followers = line.split(""); 
+if (twitter_id and count_followers.length == 2) {
+Float count_followers = Float parseFloat(twitter_id_and_count followers[1]; 
+val.set(count followers); 
+output collect(static_key, val);
+}
+}
+}
+public static class Reduce extends MapReduceBase implements ReducerintWritable, Floatwritable, IntWritable, Floatwritable> {
+private Floatwritable val= new Floatwritable();
+
+public void reduce(IntWritable key, Iterator<FloatWritable> values, Output Collector IntWritable, Floatwritable> output, Reporter reporter) throws IOException {
+Float sum = 0f; 
+Integer n=0; 
+while (values hasNext()) {
+Float avg_followers = values.next().get(); 
+sum += avg_followers; 
+n+ 1;
+}
+
+val.set(sum/n); 
+output.collect(key, val);
+}
+}
+
+public static void main(String[] args) throws Exception {
+JobConf conf = new JobConf(TwitterAvgFollowers.class); 
+conf.setJobName("TwitterAvgFollowers");
+
+conf.setOutputKeyClass(IntWritable.class);
+conf.setOutputValueClass(FloatWritable.class);
+
+conf.setMapperClass(Map.class);
+//conf.setCombinerClass(Reduce.class);
+conf.setReducerClass(Reduce.class);
+
+conf.setInputFormat(TextInputFormat.class);
+conf.setOutputFormat(TextOutputFormat.class);
+
+FileInputFormat.setinputPaths(conf,new Path(args[0])); 
+FileOutputFormat.setOutputPath(conf,new Path(args[1]));
+Job Client runJob(conf);
+}
+}
+
